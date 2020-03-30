@@ -1,0 +1,58 @@
+import tensorflow as tf
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+BATCH_SIZE = 1024
+RANDOM_SEED = 123
+LEARNING_RATE = 0.001
+np.random.seed(RANDOM_SEED)
+tf.random.set_seed(RANDOM_SEED)
+
+
+def prep_data_pipeline(X, Y, downsample=False):
+    negs = np.where(Y != 0)[0]
+    poss = np.where(Y == 0)[0]
+    if downsample:
+        # we know for sure that negative examples (nonspeech) are much larger than the positives
+        np.random.shuffle(poss)
+        poss = poss[:len(negs)]
+
+    data_idxs = np.hstack((poss, negs))
+    X_tr, X_te, Y_tr, Y_te = train_test_split(X[data_idxs], Y[data_idxs], test_size=0.1, shuffle=True)
+    (traind, num_cats), (testd, _) = to_tf_dataset(X_tr, Y_tr), to_tf_dataset(X_te, Y_te)
+    return traind, testd, num_cats
+
+
+def to_tf_dataset(X, Y):
+    Y_onehot = tf.keras.utils.to_categorical(Y)
+    num_cats = Y_onehot.shape[1]
+    ds = tf.data.Dataset.from_tensor_slices((X, Y_onehot)).batch(BATCH_SIZE)
+    return ds, num_cats
+
+
+def train(dataset, num_cats):
+
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(units=30, activation='sigmoid'),
+        tf.keras.layers.Dense(units=20, activation='sigmoid'),
+        tf.keras.layers.Dense(units=10, activation='sigmoid'),
+        tf.keras.layers.Dense(units=num_cats, activation='softmax'),
+    ])
+    optimizer = tf.keras.optimizers.Adam(LEARNING_RATE)
+    loss_fn = tf.losses.CategoricalCrossentropy(from_logits=True)
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=['accuracy'])
+    model.fit(dataset, epochs=20)
+    return model
+
+
+def test(model, dataset):
+    model.evaluate(dataset, verbose=2)
+
+
+if __name__ == '__main__':
+    import reader
+
+    X, Y = reader.read_wavs('data/musan-samples-less/')
+    traind, testd, num_cats = prep_data_pipeline(X, Y, True)
+    model = train(traind, num_cats)
+    print(test(model, testd))
