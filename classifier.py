@@ -21,7 +21,7 @@ def predict_pipeline(audio_fpath, model):
     import os
     if type(audio_fpath) != str:
         audio_fpath = os.path.join(*audio_fpath)
-    feats = feature.extract(audio_fpath)
+    feats = feature.extract(audio_fpath, verbose=False)
     predictions = np.argmax(model.predict(feats), axis=1)
     return predictions
 
@@ -30,14 +30,12 @@ def prep_data_pipeline(X, Y, downsample=False):
     # current implementation only considers binary classification (speech vs. nonspeech)
     negs = np.where(Y != 0)[0]
     poss = np.where(Y == 0)[0]
-    print(len(negs), len(poss))
     if downsample:
         # we know for sure that negative examples (nonspeech) are much larger than the positives
         np.random.shuffle(poss)
         poss = poss[:len(negs)]
 
     data_idxs = np.hstack((poss, negs))
-    print(data_idxs)
     X_tr, X_te, Y_tr, Y_te = train_test_split(X[data_idxs], Y[data_idxs], test_size=0.1, shuffle=True)
     (traind, num_cats), (testd, _) = to_tf_dataset(X_tr, Y_tr), to_tf_dataset(X_te, Y_te)
     return traind, testd, num_cats

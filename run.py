@@ -1,10 +1,10 @@
 import reader, feature, classifier, smoothing
 import sys
+import os
 
 if __name__ == '__main__':
 
     import argparse
-    print(sys.argv)
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=__doc__
@@ -45,5 +45,6 @@ if __name__ == '__main__':
         for wav in reader.read_wavs(args.segment[1], file_ext='.mp3'):
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
+            print(os.path.join(*wav), end='\t')
             smoothing.frames_to_durations(predicted)
 
