@@ -37,11 +37,6 @@ def read_wavs(data_dir, file_ext='.wav'):
 
 
 if __name__ == '__main__':
-    # for testing
     import sys
-
     X, Y = read_wavs(sys.argv[1])
-    print(len(X))
-    print(len(Y))
-    print(X[0], Y[0])
 

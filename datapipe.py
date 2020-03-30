@@ -10,6 +10,7 @@ tf.random.set_seed(RANDOM_SEED)
 
 
 def prep_data_pipeline(X, Y, downsample=False):
+    # current implementation only considers binary classification (speech vs. nonspeech)
     negs = np.where(Y != 0)[0]
     poss = np.where(Y == 0)[0]
     if downsample:
@@ -24,7 +25,7 @@ def prep_data_pipeline(X, Y, downsample=False):
 
 
 def to_tf_dataset(X, Y):
-    Y_onehot = tf.keras.utils.to_categorical(Y)
+    Y_onehot = tf.keras.utils.to_categorical(Y, dtype='int16')
     num_cats = Y_onehot.shape[1]
     ds = tf.data.Dataset.from_tensor_slices((X, Y_onehot)).batch(BATCH_SIZE)
     return ds, num_cats
@@ -51,8 +52,9 @@ def test(model, dataset):
 
 if __name__ == '__main__':
     import reader
+    import sys
 
-    X, Y = reader.read_wavs('data/musan-samples-less/')
+    X, Y = reader.read_wavs(sys.argv[1])
     traind, testd, num_cats = prep_data_pipeline(X, Y, True)
     model = train(traind, num_cats)
     print(test(model, testd))
