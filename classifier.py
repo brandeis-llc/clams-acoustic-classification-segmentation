@@ -13,7 +13,14 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
     tr_ds, te_ds, num_cats = prep_data_pipeline(X, Y, downsample=True)
     model = train(tr_ds, num_cats)
     test(model, te_ds)
-    persist_model(model)
+    return persist_model(model, 'saved_models/')
+
+
+def predict_pipeline(X: np.ndarray, model_path):
+    model = load_model(model_path)
+    predictions = np.argmax(model.predict(X), axis=1)
+    return predictions
+
 
 
 def prep_data_pipeline(X, Y, downsample=False):
@@ -62,9 +69,14 @@ def predict(model, data):
     return model.predict(data)
 
 
-def persist_model(model):
-    NotImplementedError
+def persist_model(model, persist_dir):
+    import datetime
+    import os
+    timestamp = datetime.datetime.today().strftime('%Y%m%d-%H%M')
+    model_path = os.path.join(persist_dir, timestamp)
+    model.save(model_path, save_format='tf')
+    return model_path
 
 
 def load_model(model_path):
-    NotImplementedError
+    return tf.keras.models.load_model(model_path)
