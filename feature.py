@@ -38,7 +38,7 @@ def extract_all(wav_paths, train=False, binary_class=True):
     label = None
     for wav_dir, wav_fname in wav_paths:
         if train:
-            label_str = wav_dir.split(os.sep)[-1]
+            label_str = wav_fname.split('-')[0]
             label = index_label(label_str, binary_class)
         full_fname = os.path.join(wav_dir, wav_fname)
         feature = extract(full_fname)
