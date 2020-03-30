@@ -1,4 +1,5 @@
 data/**
+saved_models/**
 # linux
 *~
 .directory # KDE directory preferences

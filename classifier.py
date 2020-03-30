@@ -16,11 +16,14 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
     return persist_model(model, 'saved_models/')
 
 
-def predict_pipeline(X: np.ndarray, model_path):
-    model = load_model(model_path)
-    predictions = np.argmax(model.predict(X), axis=1)
+def predict_pipeline(audio_fpath, model):
+    import feature
+    import os
+    if type(audio_fpath) != str:
+        audio_fpath = os.path.join(*audio_fpath)
+    feats = feature.extract(audio_fpath)
+    predictions = np.argmax(model.predict(feats), axis=1)
     return predictions
-
 
 
 def prep_data_pipeline(X, Y, downsample=False):

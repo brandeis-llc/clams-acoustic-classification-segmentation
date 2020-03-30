@@ -10,8 +10,11 @@ labels = {'speech': 0, 'music': 1, 'noise': 2}
 
 def extract(wav_fname, normalize=False, **kwargs):
     print(f'extracting: {wav_fname}\t', end='')
-    audio, sr = librosa.load(wav_fname, **kwargs)
-    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=MFCC_SIZE).T
+    # will sample 16000 points per second
+    audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
+    # then slide over frames of 1/100 seconds (=10ms)
+    frame_sliding_size = sr // 100
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=MFCC_SIZE, hop_length=frame_sliding_size).T
     print(librosa.get_duration(audio, sr), mfccs.shape)
     if normalize:
         return cmvn(mfccs)
