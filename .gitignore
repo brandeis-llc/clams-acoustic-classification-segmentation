@@ -1,0 +1,70 @@
+# linux
+*~
+.directory # KDE directory preferences
+.Trash-* # Linux trash folder which might appear on any partition or disk
+
+# macos
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon # Icon must end with two \r
+._* # Thumbnails
+.DocumentRevisions-V100 # Files that might appear in the root of a volume
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.AppleDB # Directories potentially created on remote AFP share
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab # Windows Installer files
+*.msi
+*.msm
+*.msp
+*.lnk # Windows shortcuts
+
+# idea
+.idea
+*.iml
+out
+gen
+
+# sqlite
+*.db
+*.sqlite3
+
+
+# java
+*.class
+.mtj.tmp/ # Mobile Tools for Java (J2ME)
+target/ # Package Files #
+*.jar
+*.war
+*.ear
+hs_err_pid* # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+
+# python 
+**/*.pyc
+**/__pycache__
+
+# shared folders
+dropbox_shared*/
+github_shared*/
+gdrive_shared*/
+
+# external references
+\!rel_*/
+\!ref_*/
+
+# ctag generated file
+tags
+.tags
