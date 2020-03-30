@@ -9,16 +9,25 @@ np.random.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
 
+def train_pipeline(X: np.ndarray, Y: np.ndarray):
+    tr_ds, te_ds, num_cats = prep_data_pipeline(X, Y, downsample=True)
+    model = train(tr_ds, num_cats)
+    test(model, te_ds)
+    persist_model(model)
+
+
 def prep_data_pipeline(X, Y, downsample=False):
     # current implementation only considers binary classification (speech vs. nonspeech)
     negs = np.where(Y != 0)[0]
     poss = np.where(Y == 0)[0]
+    print(len(negs), len(poss))
     if downsample:
         # we know for sure that negative examples (nonspeech) are much larger than the positives
         np.random.shuffle(poss)
         poss = poss[:len(negs)]
 
     data_idxs = np.hstack((poss, negs))
+    print(data_idxs)
     X_tr, X_te, Y_tr, Y_te = train_test_split(X[data_idxs], Y[data_idxs], test_size=0.1, shuffle=True)
     (traind, num_cats), (testd, _) = to_tf_dataset(X_tr, Y_tr), to_tf_dataset(X_te, Y_te)
     return traind, testd, num_cats
@@ -32,7 +41,6 @@ def to_tf_dataset(X, Y):
 
 
 def train(dataset, num_cats):
-
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(units=30, activation='sigmoid'),
         tf.keras.layers.Dense(units=20, activation='sigmoid'),
@@ -50,11 +58,13 @@ def test(model, dataset):
     model.evaluate(dataset, verbose=2)
 
 
-if __name__ == '__main__':
-    import reader
-    import sys
+def predict(model, data):
+    return model.predict(data)
 
-    X, Y = reader.read_wavs(sys.argv[1])
-    traind, testd, num_cats = prep_data_pipeline(X, Y, True)
-    model = train(traind, num_cats)
-    print(test(model, testd))
+
+def persist_model(model):
+    NotImplementedError
+
+
+def load_model(model_path):
+    NotImplementedError
