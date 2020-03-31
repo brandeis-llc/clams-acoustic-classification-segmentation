@@ -45,6 +45,6 @@ if __name__ == '__main__':
         for wav in reader.read_wavs(args.segment[1], file_ext=['mp3', 'wav']):
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
-            print(os.path.join(*wav), end='\t')
+            print(os.path.join(*wav), end='\t', flush=True)
             smoothing.frames_to_durations(predicted, True)
 

@@ -53,11 +53,11 @@ def frames_to_durations(predictions, report_ratio=False):
         segments[cur_speech_segment_started] = len(predictions)-1
     speech_sum = 0
     for start, end in segments.items():
-        print(f'{start/100}\t{end/100}', end='\t')
+        print(f'{start/100}\t{end/100}', end='\t', flush=True)
         speech_sum += (end - start)
         
     if report_ratio:
-        print(f"speech_ratio: {(speech_sum / len(predictions)):.2%} ({speech_sum} / {len(predictions)})")
-    print('\n')
+        print(f"speech_ratio: {(speech_sum / len(predictions)):.2%} ({speech_sum} / {len(predictions)})", end='', flush=True)
+    print('', flush=True)
 
 
