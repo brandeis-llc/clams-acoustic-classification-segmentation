@@ -18,10 +18,11 @@ def mode_smooth(predictions: np.ndarray, smooth_window=20):
 
 def trim_short_noises(predictions: np.ndarray, threshold=300):
     i = 0
+    cur = predictions[0]
     while i < len(predictions):
         if predictions[i] == 1:
             next_nonzeros = np.where(predictions[i:] == 0)[0]
-            if len(next_nonzeros) == 0:
+            if len(next_nonzeros) == 0: # nore more flips left
                 break
             noise_len = next_nonzeros[0]
             #  print(i, noise_len)
@@ -32,7 +33,7 @@ def trim_short_noises(predictions: np.ndarray, threshold=300):
             i += 1
 
 
-def frames_to_durations(predictions):
+def frames_to_durations(predictions, report_ratio=False):
     # assumes frame size to be a hundredth second (10ms)
     # smoothings happen in-place
     #  mode_smooth(predictions)
@@ -50,9 +51,13 @@ def frames_to_durations(predictions):
             speech = True
     if speech:
         segments[cur_speech_segment_started] = len(predictions)-1
-
+    speech_sum = 0
     for start, end in segments.items():
         print(f'{start/100}\t{end/100}', end='\t')
+        speech_sum += (end - start)
+        
+    if report_ratio:
+        print(f"speech_ratio: {(speech_sum / len(predictions)):.2%} ({speech_sum} / {len(predictions)})")
     print('\n')
 
 

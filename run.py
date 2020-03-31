@@ -46,5 +46,5 @@ if __name__ == '__main__':
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
             print(os.path.join(*wav), end='\t')
-            smoothing.frames_to_durations(predicted)
+            smoothing.frames_to_durations(predicted, True)
 
