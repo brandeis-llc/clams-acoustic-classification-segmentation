@@ -16,12 +16,28 @@ def mode_smooth(predictions: np.ndarray, smooth_window=20):
         e = min(len(predictions), i+1+smooth_window)
         predictions[i] = stats.mode(predictions[s:e])[0]
 
+def trim_short_noises(predictions: np.ndarray, threshold=300):
+    i = 0
+    while i < len(predictions):
+        if predictions[i] == 1:
+            next_nonzeros = np.where(predictions[i:] == 0)[0]
+            if len(next_nonzeros) == 0:
+                break
+            noise_len = next_nonzeros[0]
+            #  print(i, noise_len)
+            if noise_len < threshold:
+                predictions[i:i+noise_len] = 0
+            i += noise_len
+        else:
+            i += 1
+
 
 def frames_to_durations(predictions):
     # assumes frame size to be a hundredth second (10ms)
     # smoothings happen in-place
-    mode_smooth(predictions)
-    minimum_change_support(predictions)
+    #  mode_smooth(predictions)
+    #  minimum_change_support(predictions)
+    trim_short_noises(predictions)
     speech = False
     segments = {}
     cur_speech_segment_started = 0
