@@ -35,14 +35,14 @@ if __name__ == '__main__':
         sys.exit(1)
     args = parser.parse_args()
     if args.train:
-        X, Y = feature.extract_all(reader.read_wavs(args.train, file_per_dir=2), train=True, binary_class=True)
+        X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, binary_class=True)
         model_path = classifier.train_pipeline(X, Y)
         print("============")
         print("model saved at " + model_path)
         print("============")
 
     if args.segment:
-        for wav in reader.read_wavs(args.segment[1], file_ext='.mp3'):
+        for wav in reader.read_wavs(args.segment[1], file_ext=['mp3', 'wav']):
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
             print(os.path.join(*wav), end='\t')
