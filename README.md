@@ -34,12 +34,12 @@ The processed results are stored as `segmented.tsv`, a tab-separated file, in th
 
 ### Using docker
 
-We also provide [`Dockerfile`](Dockerfile). If you want to run the segmenter as a docker container (not worrying about dependencies), build an image from this project directory using the `Dockerfile` and run it with the target directory mounted to `/segmenter/data`. Just MAKE SURE that target directory is writable by others (`chmod u+w $TARGET_DIR`) because a non-root user will be running the processor in the container. For example, 
+We also provide [`Dockerfile`](Dockerfile). If you want to run the segmenter as a docker container (not worrying about dependencies), build an image from this project directory using the `Dockerfile` and run it with the target directory mounted to `/segmenter/data`. Just MAKE SURE that target directory is writable by others (`chmod o+w $TARGET_DIR`) because a non-root user will be running the processor in the container. For example, 
 
 ```bash
 git clone https://github.com/keighrim/audio-segmentation.git 
 cd audio-segmentation
-chmod -R u+w $HOME/audio-files && docker build . -t audioseg && docker run --rm -v $HOME/audio-files:/segmenter/data -it audioseg
+chmod -R o+w $HOME/audio-files && docker build . -t audioseg && docker run --rm -v $HOME/audio-files:/segmenter/data -it audioseg
 ```
 
 Once the process is done, you'll find a `segmented.tsv` file in the local target directory. 
