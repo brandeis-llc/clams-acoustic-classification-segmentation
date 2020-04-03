@@ -1,4 +1,4 @@
-# Audio Segmenter
+# Audio Element Segmenter
 
 Simple audio segmenter to isolate speech portion of audio files. Uses a simple feedforward MLP for classification (implemented using `tensorflow`) and heuristic smoothing methods to increase the recall of speech segments. 
 
