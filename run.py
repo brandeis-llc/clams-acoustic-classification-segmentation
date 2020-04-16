@@ -1,4 +1,4 @@
-import reader, feature, classifier, smoothing
+import reader, feature, classifier, smoothing, writer
 import sys
 import os
 
@@ -29,6 +29,16 @@ if __name__ == '__main__':
         nargs=2,
         help='Flag to invoke segmentation pipeline. First arg to specify model path, and second to specify directory where wave files are. '
     )
+    parser.add_argument(
+        '-o', '--out',
+        default='',
+        action='store_true',
+        help='Only valid with \'segment\' flag. When given, new wav files are '
+             'generated from an input audio file, each stores a single \'speech\' '
+             'segment. Newly generated files are stored in a subdirectory named '
+             'after the full audio file, and suffixed with starting position '
+             'in seconds (to two decimal places).'
+    )
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -45,6 +55,12 @@ if __name__ == '__main__':
         for wav in reader.read_wavs(args.segment[1], file_ext=['mp3', 'wav']):
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
-            print(os.path.join(*wav), end='\t', flush=True)
-            smoothing.frames_to_durations(predicted, True)
+            smoothed = smoothing.smooth(predicted)
+            speech_portions, total_frames = writer.index_frames(smoothed)
+            audio_fname = os.path.join(*wav)
+            writer.print_durations(speech_portions, audio_fname, total_frames)
+            if args.out:
+                print('writing files')
+                writer.slice_speech(speech_portions, audio_fname)
+
 

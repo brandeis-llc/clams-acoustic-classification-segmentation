@@ -12,6 +12,7 @@ Simple audio segmenter to isolate speech portion of audio files. Uses a simple f
   * `numpy`
   * `scipy`
   * `scikit-learn`
+  * `ffmpeg-python`
 
 ## Training 
 
