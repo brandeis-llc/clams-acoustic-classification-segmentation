@@ -41,5 +41,5 @@ def slice_speech(indexed_speech_segements, input_audio_fname):
         start = start / 100
         end = end / 100
         output_fname = f'{output_dirname.split(os.sep)[-1]}.{str(start)}.wav'
-        in_stream = ffmpeg.input(input_audio_fname, f=input_audio_fname[-3:], ss=start, to=end)
-        in_stream.output(os.path.join(output_dirname, output_fname)).run()
+        in_stream = ffmpeg.input(input_audio_fname, f=input_audio_fname[-3:], ss=start, t=end-start)
+        in_stream.output(os.path.join(output_dirname, output_fname)).run(overwrite_output=True)
