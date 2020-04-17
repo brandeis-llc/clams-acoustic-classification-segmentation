@@ -36,6 +36,9 @@ def slice_speech(indexed_speech_segements, input_audio_fname):
         os.makedirs(output_dirname)
     elif not os.path.isdir(output_dirname):
         raise IOError(f'{output_dirname} file exists and thus output directory cannot be created.')
+    else:
+        for f in os.listdir(output_dirname):
+            os.remove(os.path.join(output_dirname, f))
 
     for start, end in indexed_speech_segements.items():
         start = start / 100
