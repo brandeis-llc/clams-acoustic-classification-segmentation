@@ -22,11 +22,11 @@ We provide a [pretrained model](pretrained/). The model is trained on [MUSAN cor
 
 ### Training pipeline
 
-To train your own model, invoke `run.py` with `-t` flag and pass the directory name where training data is stored. You might also want to take a look at `extract_all` function in [`feature.py`](feature.py) to change how the labels are read in, if using corpora other than the MUSAN. 
+To train your own model, invoke `run_aes.py` with `-t` flag and pass the directory name where training data is stored. You might also want to take a look at `extract_all` function in [`feature.py`](feature.py) to change how the labels are read in, if using corpora other than the MUSAN. 
 
 ## Segmentation
 
-To run the segmenter over audio files, invoke `run.py` with `-s` flag, and pass 1) model path (feel free to use the pretrained model if needed) and 2) the directory where audio files are stored. Currently it will process all `mp3` and `wav` files in the target directory. If you want to process other types of audio file, add to or change the `file_ext` list near the bottom of [`run.py`](run.py) files. 
+To run the segmenter over audio files, invoke `run_aes.py` with `-s` flag, and pass 1) model path (feel free to use the pretrained model if needed) and 2) the directory where audio files are stored. Currently it will process all `mp3` and `wav` files in the target directory. If you want to process other types of audio file, add to or change the `file_ext` list near the bottom of [`run_aes.py`](run_aes.py) files. 
 
 The processed results are stored as `segmented.tsv`, a tab-separated file, in the target directory. Each row of the file represents a result from a single audio file, and columns represents as follows; 
 * first column shows the file path
