@@ -17,15 +17,31 @@ def mode_smooth(predictions: np.ndarray, smooth_window=20):
         predictions[i] = stats.mode(predictions[s:e])[0]
 
 
+def trim_short_speech(predictions: np.ndarray, threshold=200):
+    i = 0
+    while i < len(predictions):
+        if predictions[i] == 0:
+            next_nonzeros = np.where(predictions[i:] == 1)[0]
+            if len(next_nonzeros) == 0:  # nore more flips left
+                break
+            speech_len = next_nonzeros[0]
+            #  print(i, noise_len)
+            if speech_len < threshold:
+                predictions[i:i + speech_len] = 1
+            i += speech_len
+        else:
+            i += 1
+
+
 def trim_short_noises(predictions: np.ndarray, threshold=300):
     i = 0
     cur = predictions[0]
     while i < len(predictions):
         if predictions[i] == 1:
-            next_nonzeros = np.where(predictions[i:] == 0)[0]
-            if len(next_nonzeros) == 0:  # nore more flips left
+            next_speeches = np.where(predictions[i:] == 0)[0]
+            if len(next_speeches) == 0:  # nore more flips left
                 break
-            noise_len = next_nonzeros[0]
+            noise_len = next_speeches[0]
             #  print(i, noise_len)
             if noise_len < threshold:
                 predictions[i:i + noise_len] = 0
@@ -37,7 +53,8 @@ def trim_short_noises(predictions: np.ndarray, threshold=300):
 def smooth(predictions):
     # assumes frame size to be a hundredth second (10ms)
     # smoothings happen in-place
-    #  mode_smooth(predictions)
-    #  minimum_change_support(predictions)
+    # mode_smooth(predictions)
+    # minimum_change_support(predictions)
     trim_short_noises(predictions)
+    trim_short_speech(predictions)
     return predictions
