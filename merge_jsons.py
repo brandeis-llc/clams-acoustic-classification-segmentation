@@ -30,9 +30,7 @@ def adjust(json_fname, offset):
     with open(json_fname) as in_f:
         synced = json.loads(in_f.read(), encoding='utf-8')
         for word in synced['words']:
-            print(word['time'], offset)
             word['time'] = round(offset + word['time'], 2)
-            print(word['time'])
     return synced
             
 
@@ -41,11 +39,9 @@ if __name__ == "__main__":
     if d.endswith('/'):
         d = d[:-1]
     dparent, dbase= os.path.split(d)
-    print(dbase, dparent)
     split_json_dir = os.path.join(d, 'transcripts', 'json')
     merge_json_dir = os.path.join(dparent, 'transcripts', 'json')
     merge_txt_dir = os.path.join(dparent, 'transcripts', 'txt')
-    print(split_json_dir, merge_json_dir)
     merge_json_fname = os.path.join(merge_json_dir, dbase + '.json')
     merge_txt_fname = os.path.join(merge_txt_dir, dbase + '.txt')
     os.makedirs(merge_json_dir, exist_ok=True)

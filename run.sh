@@ -7,11 +7,15 @@ INDIR=$(realpath $1)
 AES_IMAGE="keigh-aes"
 KALDI_IMAGE="aapb-pua-kaldi"
 
+# audio segmentation 
 docker run --rm -v $INDIR:/segmenter/data $AES_IMAGE
 
 for splitdir in $(find $INDIR -type d); do 
     if [ $splitdir != $INDIR ]; then 
-        docker run --rm -v $splitdir:/audio_in $KALDI_IMAGE
-        python merge_jsons.py $splitdir
+        # call kaldi on each segment
+        docker run --rm -v "$splitdir":/audio_in $KALDI_IMAGE
+        # merge segmental transcripts into one json
+        # merger script is provided via aes docker image
+        docker run --rm -v "$INDIR":/segmenter/data $AES_IMAGE python /segmenter/merge_jsons.py /segmenter/data/$(basename "$splitdir")
     fi
 done
