@@ -10,7 +10,7 @@ KALDI_IMAGE="aapb-pua-kaldi"
 # audio segmentation 
 docker run --rm -v $INDIR:/segmenter/data $AES_IMAGE
 
-for splitdir in $(find $INDIR -type d); do 
+for splitdir in $(find $INDIR -maxdepth 1 -type d); do 
     if [ $splitdir != $INDIR ]; then 
         # call kaldi on each segment
         docker run --rm -v "$splitdir":/audio_in $KALDI_IMAGE
