@@ -11,10 +11,11 @@ def merge_jsonfiles(json_fnames, out_fname):
 def adjust_all(json_fnames):
     for fname in json_fnames:
         """
-        exp/tri3/decode-cpb-aacip-259-dj58gh9t.h264.mp4.11.79.wav_16kHz.wav
+        (keigh fork) exp/tri3/decode-cpb-aacip-259-dj58gh9t.h264.mp4.11.79.wav_16kHz.wav
+        (hipstas v1) exp/tri3/decode-cpb-aacip-259-dj58gh9t.h264.mp4.11.79_16kHz.wav
         """
         fbase = os.path.basename(fname)
-        offset = float('.'.join(fbase.split('.')[-4:-2]))
+        offset = float('.'.join(fbase.split('_16kHz')[0].split('.')[-2:]))
         yield adjust(fname, offset)
 
 
