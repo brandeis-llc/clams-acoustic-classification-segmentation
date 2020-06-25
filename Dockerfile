@@ -8,4 +8,4 @@ COPY . /segmenter
 WORKDIR /segmenter
 RUN pip install -r requirements.txt
 
-CMD python run_aes.py -os pretrained/$(ls pretrained/ | sort | tail -1) data > data/segmented.tsv
+CMD python run_aes.py -os pretrained/$(ls pretrained/ | sort | tail -1) data > data/segmented.tsv && chmod 777 data/segmented.tsv
