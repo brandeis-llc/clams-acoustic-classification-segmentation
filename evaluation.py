@@ -1,7 +1,3 @@
-#ASSUMING .wav FILES FROM LDC ARE ONLY .wav FILES IN FOLDER
-#comment everything
-
-
 import os
 import re
 import sys
