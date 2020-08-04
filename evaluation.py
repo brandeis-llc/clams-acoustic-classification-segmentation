@@ -1,13 +1,15 @@
 import os
 import re
 import sys
+import subprocess
 from io import open
+from subprocess import PIPE
 
 
 def validate_paths(args):
-    if len(args) != 4:
+    if (len(args) < 4) or (len(args) > 5):
         # break, explain inputs
-        print("To run evaluation.py, please provide\n1) the path to the LDC text and sph files\n2) the path to the audiosegmenter's run.py\n3) the path to the audiosegmenter model including the file name and type\n as arguments.")
+        print("To run evaluation.py, please provide\n1) the path to the LDC text and sph files\n2) the path to the audiosegmenter's run.py\n3) the path to the audiosegmenter model and type\n as arguments.")
         quit()
     if os.path.exists(args[1]) is False:
         # break, explain bad file location
@@ -62,8 +64,9 @@ def find_ldc_unannot(contents):
         if (section[:6] != "Story ") and (section[:6] != "Filler"):
             regex_times = re.compile(r"(_time=)(\d*.\d*)")
             times = regex_times.findall(section)
-            section_boundaries.append(times[0][1])
-            section_boundaries.append(times[1][1])
+            if len(times) > 0:
+                section_boundaries.append(times[0][1])
+                section_boundaries.append(times[1][1])
 
     return section_boundaries
 
@@ -80,13 +83,15 @@ def find_ldc_output(contents):
     speech_boundaries = []
     for segment in segments:
         times = regex_times.findall(segment)
-        if int(float(times[0][1])) <= (int(float(end)) + 3):
-            end = times[1][1]
-        else:
-            speech_boundaries.append('%.2f' % (float(start)))
-            speech_boundaries.append('%.2f' % (float(end)))
-            start = times[0][1]
-            end = times[1][1]
+
+        if len(times) > 0:
+            if int(float(times[0][1])) <= (int(float(end)) + 3):
+                end = times[1][1]
+            else:
+                speech_boundaries.append('%.2f' % (float(start)))
+                speech_boundaries.append('%.2f' % (float(end)))
+                start = times[0][1]
+                end = times[1][1]
     speech_boundaries.append('%.2f' % (float(start)))
     speech_boundaries.append('%.2f' % (float(end)))
 
@@ -106,8 +111,11 @@ def run_audiosegmenter(file_path, run_path, model_path):
         print("Run.py not found in run path")
         quit()
 
-    print(run_prog + " -s " + model_path + " " + file_path)
-    #os.system(run_prog + " -s " + model_path + " " + file_path)
+    output_path = os.path.join(file_path, "segmented.tsv")
+    file = open(output_path, "w+")
+    subprocess.call(["python3", run_prog, "-s", model_path, file_path], stdout=file)
+    file.close()
+    os.chmod(output_path, 0o777)
 
 
 def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
@@ -117,6 +125,9 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
     file.close()
 
     error = {}
+    sum_of_errors = 0
+    num_of_files = 0
+    sum_of_file_lengths = 0.0
     for line in contents:
         file = re.findall(r"/([\w\d]+).wav", line)
         if file != []:
@@ -126,18 +137,27 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
             unannot_numbers = ldc_unannot[file[0]]
 
             fixer = find_fixer(audioseg_numbers, unannot_numbers, regex_times)
-            miss, false, total = find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times)
+            miss, false, total, length = find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times)
 
+            sum_of_file_lengths = sum_of_file_lengths + float(length) - fixer
             error_val = ((miss + false - fixer) / total) * 100
+            sum_of_errors = sum_of_errors + error_val
+            num_of_files += 1
             error[file[0]] = file[0] + ' \t ' + '%.2f' % error_val + "%"
             print(file[0], 'error:', '%.2f' % error_val, "%")
 
+    average = sum_of_errors / num_of_files
+    print('AVERAGE ERROR:', '%.2f' % average, "%")
+    print()
+    print('Total length of annotated files:', '%.2f' % ((sum_of_file_lengths / 60) / 60), 'hours')
+
     if len(error) != len(ldc_outputs):
+        print()
         print("Audiosegmenter did not process all of the LDC files successfully.")
         print("Audiosegmenter files processed: ", len(error))
         print("LDC files processed: ", len(ldc_outputs))
 
-    return error
+    return error, average
 
 
 def find_fixer(audioseg_numbers, unannot_numbers, regex_times):
@@ -226,12 +246,8 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
             x += 2
             y += 2
 
-    while x < len(audioseg_numbers):
-        # track all of the non-speaking sections that were mislabelled
-        as_atart = float(audioseg_numbers[x])
-        as_end = float(audioseg_numbers[x + 1])
-        false = false + (as_end - as_start)
-        x += 2
+    # do not check for remaining non-speaking sections, as multiple minutes of unannotated (but caught by the segmenter) commercials are often at the end of the file
+
     while y < len(ldc_numbers):
         # track all of the speaking sections that were missed
         ldc_start = float(ldc_numbers[y])
@@ -240,15 +256,17 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
         total = total + (ldc_end - ldc_start)
         y += 2
 
-    return miss, false, total
+    return miss, false, total, ldc_numbers[y-1]
 
 
-def save_output(error):
+def save_output(error, average):
     keys = error.keys()
 
     output = open("evaluation.tsv", "w")
     for key in keys:
         output.write(error[key] + "\n")
+    final = "AVERAGE ERROR:" + '\t' + '%.2f' % average + "%"
+    output.write(final)
     output.close()
 
 
@@ -266,7 +284,7 @@ if __name__ == '__main__':
     run_audiosegmenter(file_path, run_path, model_path)
 
     # parse audiosegmenter output and calculate the error for each relevant file
-    error = parse_audiosegmenter(file_path, ldc_unannot, ldc_outputs)
+    error, average = parse_audiosegmenter(file_path, ldc_unannot, ldc_outputs)
 
     # save output as a file
-    save_output(error)
+    save_output(error, average)
