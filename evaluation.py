@@ -126,8 +126,11 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
 
     error = {}
     sum_of_errors = 0
+    sum_of_precisions = 0
+    sum_of_recalls = 0
     num_of_files = 0
     sum_of_file_lengths = 0.0
+    print('%10s' % 'FILE NAME' + '%10s' % 'WER' + '%14s' % 'PRECISION' + '%8s' % 'RECALL')
     for line in contents:
         file = re.findall(r"/([\w\d]+).wav", line)
         if file != []:
@@ -137,18 +140,24 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
             unannot_numbers = ldc_unannot[file[0]]
 
             fixer = find_fixer(audioseg_numbers, unannot_numbers, regex_times)
-            miss, false, total, length = find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times)
+            miss, false, total_pos, guessed_pos, length = find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times)
 
             sum_of_file_lengths = sum_of_file_lengths + float(length) - fixer
-            error_val = ((miss + false - fixer) / total) * 100
+            error_val = ((miss + false - fixer) / total_pos) * 100
+            precision = (total_pos - miss) / (guessed_pos - fixer)
+            recall = (total_pos - miss) / total_pos
             sum_of_errors = sum_of_errors + error_val
+            sum_of_precisions = sum_of_precisions + precision
+            sum_of_recalls = sum_of_recalls + recall
             num_of_files += 1
-            error[file[0]] = file[0] + ' \t ' + '%.2f' % error_val + "%"
-            print(file[0], 'error:', '%.2f' % error_val, "%")
+            error[file[0]] = file[0] + '\t' + '%.2f' % error_val + "%\t" + '%.2f' % precision + '\t' + '%.2f' % recall
+            print('%10s' % file[0] + '%10.2f' % error_val + "%" + '%10.2f' % precision + '%10.2f' % recall)
 
-    average = sum_of_errors / num_of_files
-    print('AVERAGE ERROR:', '%.2f' % average, "%")
-    print()
+    average_error = sum_of_errors / num_of_files
+    average_precision = sum_of_precisions / num_of_files
+    average_recall = sum_of_recalls / num_of_files
+    average = '\t' + '%.2f' % average_error + '%\t' + '%.2f' %  average_precision + '\t' + '%.2f' %  average_recall
+    print('\nAVERAGE:' + average)
     print('Total length of annotated files:', '%.2f' % ((sum_of_file_lengths / 60) / 60), 'hours')
 
     if len(error) != len(ldc_outputs):
@@ -197,7 +206,8 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
     y = 0
     false = 0.0
     miss = 0.0
-    total = 0.0
+    total_pos = 0.0
+    guessed_pos = 0.0
     while x < len(audioseg_numbers) and y < len(ldc_numbers):
         as_start = float(audioseg_numbers[x])
         as_end = float(audioseg_numbers[x + 1])
@@ -206,10 +216,11 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
 
         if (as_start > ldc_end):
             miss = miss + (ldc_end - ldc_start)
-            total = total + (ldc_end - ldc_start)
+            total_pos = total_pos + (ldc_end - ldc_start)
             y += 2
         elif (ldc_start > as_end):
             false = false + (as_end - as_start)
+            guessed_pos = guessed_pos + (as_end - as_start)
             x += 2
         else:
             start = ldc_start - as_start
@@ -224,6 +235,7 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
                 # check if the next audiosegmenter piece also overlaps with this piece
                 if ((x + 2) < len(audioseg_numbers)) and (float(audioseg_numbers[x + 2]) < ldc_end):
                     x += 2
+                    guessed_pos = guessed_pos + (as_end - as_start)
                     miss = miss + (float(audioseg_numbers[x]) - as_end)
                     as_start = float(audioseg_numbers[x])
                     as_end = float(audioseg_numbers[x + 1])
@@ -231,7 +243,7 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
                 # check if the next ldc piece also overlaps with this piece
                 if((y + 2) < len(ldc_numbers)) and (float(ldc_numbers[y + 2]) < as_end):
                     y += 2
-                    total = total + (ldc_end - ldc_start)
+                    total_pos = total_pos + (ldc_end - ldc_start)
                     false = false + (float(ldc_numbers[y]) - ldc_end)
                     ldc_start = float(ldc_numbers[y])
                     ldc_end = float(ldc_numbers[y + 1])
@@ -242,7 +254,8 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
             else:
                 miss = miss + end
 
-            total = total + (ldc_end - ldc_start)
+            guessed_pos = guessed_pos + (as_end - as_start)
+            total_pos = total_pos + (ldc_end - ldc_start)
             x += 2
             y += 2
 
@@ -253,19 +266,20 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
         ldc_start = float(ldc_numbers[y])
         ldc_end = float(ldc_numbers[y + 1])
         miss = miss + (ldc_end - ldc_start)
-        total = total + (ldc_end - ldc_start)
+        total_pos = total_pos + (ldc_end - ldc_start)
         y += 2
 
-    return miss, false, total, ldc_numbers[y-1]
+    return miss, false, total_pos, guessed_pos, ldc_numbers[y-1]
 
 
 def save_output(error, average):
     keys = error.keys()
 
     output = open("evaluation.tsv", "w")
+    output.write("FILE NAME\tWER\tPRECISION\tRECALL\n")
     for key in keys:
         output.write(error[key] + "\n")
-    final = "AVERAGE ERROR:" + '\t' + '%.2f' % average + "%"
+    final = "AVERAGE" + average
     output.write(final)
     output.close()
 
@@ -281,7 +295,7 @@ if __name__ == '__main__':
     run_sox(file_path)
 
     # run audiosegmenter
-    run_audiosegmenter(file_path, run_path, model_path)
+    #run_audiosegmenter(file_path, run_path, model_path)
 
     # parse audiosegmenter output and calculate the error for each relevant file
     error, average = parse_audiosegmenter(file_path, ldc_unannot, ldc_outputs)
