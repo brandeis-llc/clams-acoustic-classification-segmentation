@@ -295,7 +295,7 @@ if __name__ == '__main__':
     run_sox(file_path)
 
     # run audiosegmenter
-    #run_audiosegmenter(file_path, run_path, model_path)
+    run_audiosegmenter(file_path, run_path, model_path)
 
     # parse audiosegmenter output and calculate the error for each relevant file
     error, average = parse_audiosegmenter(file_path, ldc_unannot, ldc_outputs)
