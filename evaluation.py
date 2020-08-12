@@ -4,6 +4,7 @@ import sys
 import subprocess
 from io import open
 from subprocess import PIPE
+from datetime import datetime
 
 
 def validate_paths(args):
@@ -274,8 +275,9 @@ def find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times):
 
 def save_output(error, average):
     keys = error.keys()
-
-    output = open("evaluation.tsv", "w")
+    dateTimeObj = datetime.now()
+    filename = "evaluation" + dateTimeObj.strftime("%d-%b-%Y_%H.%M.%S") + ".tsv"
+    output = open(filename, "w")
     output.write("FILE NAME\tWER\tPRECISION\tRECALL\n")
     for key in keys:
         output.write(error[key] + "\n")
