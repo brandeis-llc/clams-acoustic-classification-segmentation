@@ -43,6 +43,11 @@ def parse_ldc(path):
             section_boundaries = find_ldc_unannot(contents)
             speech_boundaries = find_ldc_output(contents)
 
+            # account for unannotated portions at the start of the file
+            if len(section_boundaries) == 0 or float(section_boundaries[0]) > float(speech_boundaries[0]):
+                section_boundaries.insert(0, speech_boundaries[0])
+                section_boundaries.insert(0, 0.0)
+
             ldc_unannot[file[:-4]] = section_boundaries
             ldc_outputs[file[:-4]] = speech_boundaries
 
@@ -56,18 +61,19 @@ def parse_ldc(path):
 
 def find_ldc_unannot(contents):
     # find all sections
-    regex_unannot = re.compile(r"Section   Type=([^>]*)")
-    unannot = regex_unannot.findall(contents)
-
-    # get the start and stop times of unannotated sections
+    section_and_following = re.finditer(r"(Section.*Type=([^>]*))[^<]+.([^>]*)", contents)
     section_boundaries = []
-    for section in unannot:
-        if (section[:6] != "Story ") and (section[:6] != "Filler"):
-            regex_times = re.compile(r"(_time=)(\d*.\d*)")
-            times = regex_times.findall(section)
-            if len(times) > 0:
-                section_boundaries.append(times[0][1])
-                section_boundaries.append(times[1][1])
+    
+    # get the start and stop times of the non-annotated sections
+    for section in section_and_following:
+        regex_times = re.compile(r"([_t| T]ime=)(\d*.\d*)")
+        group1 = regex_times.findall(section.group(1))
+        group2 = regex_times.findall(section.group(3))
+        
+        
+        if section.group(3)[0] == "/" or re.search("Commercial", section.group(2)):
+            section_boundaries.append(group1[0][1])
+            section_boundaries.append(group1[1][1])
 
     return section_boundaries
 
@@ -131,7 +137,7 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
     sum_of_recalls = 0
     num_of_files = 0
     sum_of_file_lengths = 0.0
-    print('%10s' % 'FILE NAME' + '%10s' % 'WER' + '%14s' % 'PRECISION' + '%8s' % 'RECALL')
+    print('%10s' % 'FILE NAME' + '%10s' % 'ERROR' + '%14s' % 'PRECISION' + '%8s' % 'RECALL')
     for line in contents:
         file = re.findall(r"/([\w\d]+).wav", line)
         if file != []:
@@ -139,9 +145,10 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
             audioseg_numbers = [x[0] for x in regex_times.findall(line)]
             ldc_numbers = ldc_outputs[file[0]]
             unannot_numbers = ldc_unannot[file[0]]
-
-            fixer = find_fixer(audioseg_numbers, unannot_numbers, regex_times)
+            
             miss, false, total_pos, guessed_pos, length = find_miss_false_and_total(audioseg_numbers, ldc_numbers, regex_times)
+
+            fixer = find_fixer(audioseg_numbers, unannot_numbers, regex_times, float(length))
 
             sum_of_file_lengths = sum_of_file_lengths + float(length) - fixer
             error_val = ((miss + false - fixer) / total_pos) * 100
@@ -170,23 +177,27 @@ def parse_audiosegmenter(path, ldc_unannot, ldc_outputs):
     return error, average
 
 
-def find_fixer(audioseg_numbers, unannot_numbers, regex_times):
+def find_fixer(audioseg_numbers, unannot_numbers, regex_times, stop_time):
     # calculate how much audiosegmenter time should be ignored due to coming from unannotated sections
     a = 0
     b = 0
     fixer = 0.0
-    while a < len(audioseg_numbers) and b < len(unannot_numbers):
+    
+    while a < len(audioseg_numbers) and b < len(unannot_numbers) and float(unannot_numbers[b]) < stop_time:
         as_start = float(audioseg_numbers[a])
         as_end = float(audioseg_numbers[a + 1])
         unannot_start = float(unannot_numbers[b])
         unannot_end = float(unannot_numbers[b + 1])
 
-        if as_end < unannot_start:
+        if unannot_start == unannot_end:
+            # done to account for potential 0.0 - 0.0 entry from unannotated file start correction in parse_ldc
+            b += 2
+        elif as_end < unannot_start:
             a += 2
         elif unannot_end < as_start:
             b += 2
         else:
-            if (as_start < unannot_start) and (as_end < unannot_end):
+            if (as_start <= unannot_start) and (as_end <= unannot_end):
                 fixer = fixer + (as_end - unannot_start)
                 a += 2
             elif (as_start < unannot_start) and (as_end > unannot_end):
@@ -195,10 +206,9 @@ def find_fixer(audioseg_numbers, unannot_numbers, regex_times):
             elif (as_start > unannot_start) and (as_end < unannot_end):
                 fixer = fixer + (as_end - as_start)
                 a += 2
-            elif (as_start > unannot_start) and (as_end > unannot_end):
+            elif (as_start >= unannot_start) and (as_end >= unannot_end):
                 fixer = fixer + (unannot_end - as_start)
                 b += 2
-
     return fixer
 
 
@@ -278,7 +288,7 @@ def save_output(error, average):
     dateTimeObj = datetime.now()
     filename = "evaluation" + dateTimeObj.strftime("%d-%b-%Y_%H.%M.%S") + ".tsv"
     output = open(filename, "w")
-    output.write("FILE NAME\tWER\tPRECISION\tRECALL\n")
+    output.write("FILE NAME\tERROR\tPRECISION\tRECALL\n")
     for key in keys:
         output.write(error[key] + "\n")
     final = "AVERAGE" + average
