@@ -1,6 +1,6 @@
-# Audio Element Segmenter
+# Acoustic Calssification & Segmentation 
 
-Simple audio segmenter to isolate speech portion of audio files. Uses a simple feedforward MLP for classification (implemented using `tensorflow`) and heuristic smoothing methods to increase the recall of speech segments. 
+Simple audio segmenter to isolate speech portion out of audio streams. Uses a simple feedforward MLP for classification (implemented using `tensorflow`) and heuristic smoothing methods to increase the recall of speech segments. 
 
 
 ## Requirements 
