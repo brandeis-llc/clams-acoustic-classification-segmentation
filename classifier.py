@@ -13,7 +13,7 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
     tr_ds, te_ds, num_cats = prep_data_pipeline(X, Y, downsample=True)
     model = train(tr_ds, num_cats)
     test(model, te_ds)
-    return persist_model(model, 'saved_models/')
+    return persist_model(model, 'saved_models')
 
 
 def predict_pipeline(audio_fpath, model):
