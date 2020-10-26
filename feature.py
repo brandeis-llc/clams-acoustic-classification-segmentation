@@ -38,7 +38,7 @@ def index_label(label_str, binary=True):
         return -1
 
 
-def extract_all(wav_paths, train=False, binary_class=True):
+def extract_all(wav_paths, train=False, binary_class=True, persist=False):
     features, labels = np.empty((0, MFCC_SIZE)), np.empty(0)
     label = None
     for wav_dir, wav_fname in wav_paths:
@@ -49,4 +49,10 @@ def extract_all(wav_paths, train=False, binary_class=True):
         feature = extract(full_fname)
         labels = np.append(labels, [label] * len(feature))
         features = np.vstack([features, feature])
-    return np.array(features), np.array(labels, dtype=np.int)
+    data = (np.array(features), np.array(labels, dtype=np.int))
+    if persist:
+        import datetime
+        timestamp = datetime.datetime.today().strftime('%Y%m%d-%H%M')
+        np.save(f'_models/{timestamp}.xs', data[0])
+        np.save(f'_models/{timestamp}.yx', data[1])
+    return data
