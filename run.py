@@ -1,4 +1,5 @@
-import reader, feature, classifier, smoothing, writer
+#! /usr/bin/env python3
+
 import sys
 import os
 
@@ -44,6 +45,7 @@ if __name__ == '__main__':
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
+    import reader, feature, classifier, smoothing, writer
     if args.train:
         X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, binary_class=True)
         model_path = classifier.train_pipeline(X, Y)
