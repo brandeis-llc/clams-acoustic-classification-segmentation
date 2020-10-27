@@ -52,7 +52,7 @@ if __name__ == '__main__':
             npzarrays = numpy.load(args.train)
             X, Y = npzarrays['xs'], npzarrays['ys']
         else:
-            X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, binary_class=True, persist=True)
+            X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, frame_context=6, binary_class=True, persist=True)
         model_path = classifier.train_pipeline(X, Y)
         print("============")
         print("model saved at " + model_path)
