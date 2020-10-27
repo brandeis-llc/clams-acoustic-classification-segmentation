@@ -53,6 +53,5 @@ def extract_all(wav_paths, train=False, binary_class=True, persist=False):
     if persist:
         import datetime
         timestamp = datetime.datetime.today().strftime('%Y%m%d-%H%M')
-        np.save(f'_models/{timestamp}.xs', data[0])
-        np.save(f'_models/{timestamp}.yx', data[1])
+        np.savez(f'_models/{timestamp}.features.{features.shape[1]}d', xs=data[0], ys=data[1])
     return data

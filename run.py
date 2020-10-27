@@ -21,7 +21,7 @@ if __name__ == '__main__':
         default='',
         action='store',
         nargs='?',
-        help='Flag to invoke training pipeline. Use an argument to pass directory of training data. '
+        help='Flag to invoke training pipeline. Must pass an argument that points to the training data. If the arg is a directory, training features will be extracted from all wav files in the directory - extracted features will be stored as a npz file in _model directory for future uses. If the arg is a npz file, training features stored in the file will be unpacked and be used.'
     )
     parser.add_argument(
         '-s', '--segment',
@@ -47,7 +47,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     import reader, feature, classifier, smoothing, writer
     if args.train:
-        X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, binary_class=True)
+        if args.train.endswith('.npz'):
+            import numpy
+            npzarrays = numpy.load(args.train)
+            X, Y = npzarrays['xs'], npzarrays['ys']
+        else:
+            X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, binary_class=True, persist=True)
         model_path = classifier.train_pipeline(X, Y)
         print("============")
         print("model saved at " + model_path)
