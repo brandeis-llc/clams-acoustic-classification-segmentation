@@ -13,7 +13,7 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
     tr_ds, te_ds, num_cats = prep_data_pipeline(X, Y, downsample=True)
     model = train(tr_ds, num_cats)
     test(model, te_ds)
-    return persist_model(model, 'saved_models')
+    return persist_model(model, '_models')
 
 
 def predict_pipeline(audio_fpath, model):
@@ -56,7 +56,12 @@ def train(dataset, num_cats):
         tf.keras.layers.Dense(units=num_cats, activation='softmax'),
     ])
     optimizer = tf.keras.optimizers.Adam(LEARNING_RATE)
-    loss_fn = tf.losses.CategoricalCrossentropy(from_logits=True)
+    if num_cats < 2:
+        raise ValueError("Number of acoustic categories must be more than one.")
+    elif num_cats == 2:
+        loss_fn = tf.losses.BinaryCrossentropy(from_logits=True)
+    else:
+        loss_fn = tf.losses.CategoricalCrossentropy(from_logits=True)
     model.compile(loss=loss_fn, optimizer=optimizer, metrics=['accuracy'])
     model.fit(dataset, epochs=20)
     return model
