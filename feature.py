@@ -11,7 +11,7 @@ def extract(wav_fname, frame_context=0, zcr=False, mfccbin=20, verbose=True, **k
     audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
     if verbose:
         print(f'feature extracting: {wav_fname}\t', end='', flush=True)
-    feats = spectral_feats(audio, sr, mfccbin, zrc)
+    feats = spectral_feats(audio, sr, mfccbin, zcr)
     if frame_context > 0:
         feats = temporal_feat(feats, frame_context)
     if verbose:
@@ -24,7 +24,7 @@ def spectral_feats(audio, samplerate, mfccbin, zcr):
     # then slide over frames of 1/100 seconds (=10ms)
     frame_sliding_size = samplerate // 100
     feats = librosa.feature.mfcc(y=audio, sr=samplerate, n_mfcc=mfccbin, hop_length=frame_sliding_size)
-    if zrc: 
+    if zcr:
         zcrs = librosa.feature.zero_crossing_rate(y=audio, hop_length=frame_sliding_size)
         feats = np.concatenate((feats, zcrs), axis=0)
     # transpose so that rows are time frames
