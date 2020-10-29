@@ -52,14 +52,14 @@ if __name__ == '__main__':
             npzarrays = numpy.load(args.train)
             X, Y = npzarrays['xs'], npzarrays['ys']
         else:
-            X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, frame_context=6, binary_class=True, persist=True)
+            X, Y = feature.extract_all(reader.read_audios(args.train), train=True, frame_context=6, binary_class=True, persist=True)
         model_path = classifier.train_pipeline(X, Y)
         print("============")
         print("model saved at " + model_path)
         print("============")
 
     if args.segment:
-        for wav in reader.read_wavs(args.segment[1], file_ext=['mp3', 'wav']):
+        for wav in reader.read_audios(args.segment[1]):
             model = classifier.load_model(args.segment[0])
             predicted = classifier.predict_pipeline(wav, model)
             smoothed = smoothing.smooth(predicted)

@@ -105,10 +105,6 @@ def find_ldc_output(contents):
     return speech_boundaries
 
 
-def run_sox(file_path):
-    for file in os.listdir(file_path):
-        if file.endswith(".sph") and (os.path.exists(os.path.join(file_path, (file[:-3] + "wav"))) is False):
-            os.system("sox " + file + " " + file[:-3] + "wav")
 
 
 def run_audiosegmenter(file_path, run_path, model_path):
