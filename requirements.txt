@@ -4,4 +4,5 @@ scipy>=1.4.1
 scikit-learn>=0.22.1
 ffmpeg-python==0.2.0
 sphfile>=1.0.0
+beautifulsoup4~=4.9
 tensorflow==2.0.3

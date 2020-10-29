@@ -6,6 +6,9 @@ from io import open
 from subprocess import PIPE
 from datetime import datetime
 
+from bs4 import BeautifulSoup as bs
+
+import numpy as np
 
 def validate_paths(args):
     if (len(args) < 4) or (len(args) > 5):
@@ -36,19 +39,14 @@ def parse_ldc(path):
         if file.endswith(".txt"):
             # parse the annotated file
             ldc_path = os.path.join(path, file)
-            ldc_file = open(ldc_path, encoding='utf-8')
-            contents = ldc_file.read()
-            ldc_file.close()
 
-            section_boundaries = find_ldc_unannot(contents)
-            speech_boundaries = find_ldc_output(contents)
+            unannotated_boundaries, speech_boundaries = read_hub4_annotation(ldc_path)
 
             # account for unannotated portions at the start of the file
-            if len(section_boundaries) == 0 or float(section_boundaries[0]) > float(speech_boundaries[0]):
-                section_boundaries.insert(0, speech_boundaries[0])
-                section_boundaries.insert(0, 0.0)
+            if len(unannotated_boundaries) == 0 or float(unannotated_boundaries[0][0]) > float(speech_boundaries[0][0]):
+                unannotated_boundaries.insert(0, (0.0, speech_boundaries[0]))
 
-            ldc_unannot[file[:-4]] = section_boundaries
+            ldc_unannot[file[:-4]] = unannotated_boundaries
             ldc_outputs[file[:-4]] = speech_boundaries
 
     if len(ldc_outputs) == 0:
@@ -59,52 +57,52 @@ def parse_ldc(path):
     return ldc_unannot, ldc_outputs
 
 
-def find_ldc_unannot(contents):
-    # find all sections
-    section_and_following = re.finditer(r"(Section.*Type=([^>]*))[^<]+.([^>]*)", contents)
-    section_boundaries = []
-    
-    # get the start and stop times of the non-annotated sections
-    for section in section_and_following:
-        regex_times = re.compile(r"([_t| T]ime=)(\d*.\d*)")
-        group1 = regex_times.findall(section.group(1))
-        group2 = regex_times.findall(section.group(3))
-        
-        
-        if section.group(3)[0] == "/" or re.search("Commercial", section.group(2)):
-            section_boundaries.append(group1[0][1])
-            section_boundaries.append(group1[1][1])
+def read_hub4_annotation(annotation_fname):
+    segmentation = {'filename': "", 'speech': [], 'unannotated': []}
+    with open(annotation_fname) as annotation:
+        tree = bs(annotation, 'lxml')
+        episode = tree.find('episode')
+        segmentation['filename'] = episode['filename']
+        for section in tree.find_all('section'):
+            # according to the guidelines, filler and sports_repost sections are
+            # not transcribe - and they should not have any 'segment' tags
+            if section['type'].lower() == 'filler' or \
+                    section['type'].lower() == 'sports_report':
+                segmentation['unannotated'].append((float(section['s_time']), float(section['e_time'])))
+            for segment in section.find_all('segment'):
+                segmentation['speech'].append((float(segment['s_time']), float(segment['e_time'])))
+    # account for unannotated portions at the start of the file
+    # if len(segmentation['unannotated']) == 0 or segmentation['unannotated'][0][0] > segmentation['speech'][0][0]:
+    #     segmentation['unannotated'].insert(0, (0.0, segmentation['speech'][0][0]))
 
-    return section_boundaries
-
-
-def find_ldc_output(contents):
-    # find the spoken segments
-    regex_segs = re.compile(r"Segment [^>]*")
-    segments = regex_segs.findall(contents)
-
-    # find the start and stop times in the segments
-    regex_times = re.compile(r"(_time=)(\d*.\d*)")
-    start = regex_times.findall(segments[0])[0][1]
-    end = start
-    speech_boundaries = []
-    for segment in segments:
-        times = regex_times.findall(segment)
-
-        if len(times) > 0:
-            if int(float(times[0][1])) <= (int(float(end)) + 3):
-                end = times[1][1]
-            else:
-                speech_boundaries.append('%.2f' % (float(start)))
-                speech_boundaries.append('%.2f' % (float(end)))
-                start = times[0][1]
-                end = times[1][1]
-    speech_boundaries.append('%.2f' % (float(start)))
-    speech_boundaries.append('%.2f' % (float(end)))
-
-    return speech_boundaries
+    return segmentation
 
 
+def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
+    """
+    Converts XML annotation of audio segmentation into a numpy array
+
+    :param audio_duration: duration of the audio in milliseconds
+    :param frame_size: size of a "frame" in milliseconds. frame is a time slice of each cell of the array represents.
+    :param segment_dict: dictionary where speech segmentation annotation is encoded
+
+    :return:
+    """
+    # 0 = speech
+    # 1 = nonspeech
+    # -1 = unannotated
+    a = np.ones(audio_duration//frame_size)
+
+    def to_frame_num(start_end_tuple):
+        return list(map(lambda x: int(x*1000) // frame_size, start_end_tuple))
+
+    for speech_seg in segment_dict['speech']:
+        start, end = to_frame_num(speech_seg)
+        a[start:end] = 0
+    for unannotated_seg in segment_dict['unannotated']:
+        start, end = to_frame_num(unannotated_seg)
+        a[start:end] = -1
+    return a
 
 
 def run_audiosegmenter(file_path, run_path, model_path):
