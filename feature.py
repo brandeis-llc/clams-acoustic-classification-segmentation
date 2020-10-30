@@ -10,7 +10,6 @@ ZCR=True
 MFCC_NUM=20
 
 
-
 def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr=ZCR, mfcc_num=MFCC_NUM, verbose=True, **kwargs):
     # will sample 16000 points per second
     audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
@@ -18,7 +17,9 @@ def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr
         print(f'feature extracting: {wav_fname}\t', end='', flush=True)
     feats = spectral_feats(audio, frame_size, sr, mfcc_num, zcr)
     if context_frames > 0:
-        feats = temporal_feat(feats, context_frames)
+        if verbose:
+            print(f'(normalizing)\t', end='', flush=True)
+        feats = temporal_feats(feats, context_frames)
     if verbose:
         print(f'length: {librosa.get_duration(audio, sr)} secs, frames: {feats.shape}', end='', flush=True)
         print('', flush=True)
@@ -35,12 +36,12 @@ def spectral_feats(audio, frame_size, samplerate, mfcc_num, zcr):
     return feats.T
 
 
-def temporal_feat(frames, context_frames):
-    last_frame = len(frames)
+def temporal_feats(spectral_feats, context_frames):
+    last_frame = len(spectral_feats)
     temporalized_frames = None
     for i in range(last_frame):
         # +1 to the end as array slicing is exclusive
-        context = frames[max(0, i - context_frames):min(last_frame, i + context_frames) + 1]
+        context = spectral_feats[max(0, i - context_frames):min(last_frame, i + context_frames) + 1]
         means = np.mean(context, axis=0)
         vars = np.var(context, axis=0)
         stds = np.std(context, axis=0)
