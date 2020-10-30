@@ -2,6 +2,7 @@
 
 import sys
 import os
+import evaluation
 
 if __name__ == '__main__':
 
@@ -29,6 +30,13 @@ if __name__ == '__main__':
         action='store',
         nargs=2,
         help='Flag to invoke segmentation pipeline. First arg to specify model path, and second to specify directory where wave files are. '
+    )
+    parser.add_argument(
+        '-e', '--evaluate',
+        default='',
+        action='store',
+        nargs=2,
+        help='Evaluate a model (first arg) against HUB4 annotation (second arg)'
     )
     parser.add_argument(
         '-o', '--out',
@@ -70,4 +78,12 @@ if __name__ == '__main__':
                 print('writing files')
                 writer.slice_speech(speech_portions, audio_fname)
 
+    if args.evaluate:
+        model = classifier.load_model(args.evaluate[0])
+        for sph_path in reader.read_audios(args.evaluate[1], file_ext=['sph']):
+            base_fname = sph_path[1].split('.')[0]
+            print(evaluation.evaluate_file(
+                os.path.join(*sph_path),
+                os.path.join(args.evaluate[1], base_fname + '.txt'),
+                model))
 
