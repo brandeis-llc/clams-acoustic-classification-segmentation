@@ -43,7 +43,7 @@ def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
     :return:
     """
     # 0 = speech
-    # 1 = nonspeech
+    # 1 = non-speech
     # -1 = unannotated
     a = np.ones(audio_duration//frame_size)
 
@@ -72,9 +72,9 @@ def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
     return a
 
 
-def p_r_f(hub4_array, predictoins):
+def p_r_f(hub4_array, predictions):
     annotated_idx = np.where(hub4_array != -1)[0]
-    y_hat = np.argmax(predictoins, axis=1)
+    y_hat = np.argmax(predictions, axis=1)
     return metrics.precision_recall_fscore_support(hub4_array[annotated_idx], y_hat[annotated_idx], pos_label=0, average='binary')
 
 
@@ -86,7 +86,19 @@ def roc(hub4_array, predictions):
 def evaluate_file(sph_fname, txt_fname, classifier_model):
     predicted = classifier.predict_pipeline(sph_fname, classifier_model, raw_prob=True)
     duration = predicted.shape[0] * feature.FRAME_SIZE # number of frames * frame size
-    annotation = to_nparray(read_hub4_annotation(txt_fname), duration)
-    return p_r_f(annotation, predicted)
+    annotated = to_nparray(read_hub4_annotation(txt_fname), duration)
+    return predicted, annotated, p_r_f(annotated, predicted)
 
+
+def evaluate_files(hub4_dir, model, numfiles):
+    import reader
+    all_predictions = np.empty((0,2))
+    all_annotations = np.empty((0,))
+    for sph_path in reader.read_audios(hub4_dir, file_ext=['sph'], file_per_dir=numfiles):
+        base_fname = sph_path[1].split('.')[0]
+        predictions, annotations, scores = evaluate_file(os.path.join(*sph_path), os.path.join(hub4_dir, base_fname + '.txt'), model)
+        all_predictions = np.vstack((all_predictions, predictions))
+        all_annotations = np.hstack((all_annotations, annotations))
+        print(sph_path[1], scores, flush=True)
+    print('TOTAL', p_r_f(all_annotations, all_predictions), flush=True)
 
