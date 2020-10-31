@@ -71,13 +71,19 @@ def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
     _, end = to_frame_num(segment_dict['speech'][-1])
     a[end:] = -1
 
+    print(f'annotation loaded - '
+          f'unannotated: {len(np.where(a == -1)[0]) / len(a):.2%}, '
+          f'speech: {len(np.where(a == 0)[0]) / len(a):.2%}, '
+          f'non-speech: {len(np.where(a == 1)[0]) / len(a):.2%}')
     return a
 
 
 def p_r_f(hub4_array, predictions):
+    """
+    predictions must be 1d array of labels, not k-d raw probabilities
+    """
     annotated_idx = np.where(hub4_array != -1)[0]
-    y_hat = np.argmax(predictions, axis=1)
-    return metrics.precision_recall_fscore_support(hub4_array[annotated_idx], y_hat[annotated_idx], pos_label=0, average='binary')
+    return metrics.precision_recall_fscore_support(hub4_array[annotated_idx], predictions[annotated_idx], pos_label=0, average='binary')
 
 
 def roc(hub4_array, predictions):
@@ -86,20 +92,24 @@ def roc(hub4_array, predictions):
 
 
 def evaluate_file(sph_fname, txt_fname, classifier_model):
-    predicted = classifier.predict_pipeline(sph_fname, classifier_model, raw_prob=True)
-    duration = predicted.shape[0] * feature.FRAME_SIZE # number of frames * frame size
-    annotated = to_nparray(read_hub4_annotation(txt_fname), duration)
-    return predicted, annotated, p_r_f(annotated, predicted)
+    probs = classifier.predict_pipeline(sph_fname, classifier_model, raw_prob=True)
+    duration = probs.shape[0] * feature.FRAME_SIZE # number of frames * frame size
+    y_hats = np.argmax(probs, axis=1)
+    y_hats = smoothing.smooth(y_hats)
+    ys = to_nparray(read_hub4_annotation(txt_fname), duration)
+    return probs, y_hats, ys, p_r_f(ys, y_hats)
 
 
 def evaluate_files(hub4_dir, model, numfiles):
     import reader
-    all_predictions = np.empty((0,2))
+    all_probabilities = np.empty((0,2))
+    all_predictions = np.empty((0,))
     all_annotations = np.empty((0,))
     for sph_path in reader.read_audios(hub4_dir, file_ext=['sph'], file_per_dir=numfiles):
         base_fname = sph_path[1].split('.')[0]
-        predictions, annotations, scores = evaluate_file(os.path.join(*sph_path), os.path.join(hub4_dir, base_fname + '.txt'), model)
-        all_predictions = np.vstack((all_predictions, predictions))
+        probs, predictions, annotations, scores = evaluate_file(os.path.join(*sph_path), os.path.join(hub4_dir, base_fname + '.txt'), model)
+        all_probabilities = np.vstack((all_probabilities, probs))
+        all_predictions = np.hstack((all_predictions, predictions))
         all_annotations = np.hstack((all_annotations, annotations))
         print(sph_path[1], scores, flush=True)
     print('TOTAL', p_r_f(all_annotations, all_predictions), flush=True)
