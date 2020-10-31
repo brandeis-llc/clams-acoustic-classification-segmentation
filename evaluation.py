@@ -68,6 +68,8 @@ def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
 
     # do not check for remaining non-speaking sections, as multiple minutes of unannotated (but caught by the segmenter) commercials are often at the end of the file
     # https://github.com/brandeis-llc/acoustic-classification-segmentation/blob/v1/evaluation.py#L273
+    _, end = to_frame_num(segment_dict['speech'][-1])
+    a[end:] = -1
 
     return a
 
