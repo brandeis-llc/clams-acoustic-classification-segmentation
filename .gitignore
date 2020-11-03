@@ -1,6 +1,7 @@
 data/**
 _models/**
 saved_models/**
+*.results.txt
 # linux
 *~
 .directory # KDE directory preferences

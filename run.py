@@ -2,6 +2,7 @@
 
 import sys
 import os
+import evaluation
 
 if __name__ == '__main__':
 
@@ -13,7 +14,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--download',
         action='store_true',
-        help='Flag to download input datasets; train and test sets for classifier as well as train set for word embedding.'
+        help='Flag to download input datasets; train and test sets for '
+             'classifier as well as train set for word embedding.'
     )
 
     parser.add_argument(
@@ -21,14 +23,29 @@ if __name__ == '__main__':
         default='',
         action='store',
         nargs='?',
-        help='Flag to invoke training pipeline. Must pass an argument that points to the training data. If the arg is a directory, training features will be extracted from all wav files in the directory - extracted features will be stored as a npz file in _model directory for future uses. If the arg is a npz file, training features stored in the file will be unpacked and be used.'
+        help='Flag to invoke training pipeline. Must pass an argument that '
+             'points to the training data. If the arg is a directory, training '
+             'features will be extracted from all wav files in the directory - '
+             'extracted features will be stored as a npz file in _model '
+             'directory for future uses. If the arg is a npz file, training '
+             'features stored in the file will be unpacked and be used.'
     )
     parser.add_argument(
         '-s', '--segment',
         default='',
         action='store',
         nargs=2,
-        help='Flag to invoke segmentation pipeline. First arg to specify model path, and second to specify directory where wave files are. '
+        help='Flag to invoke segmentation pipeline. First arg to specify model '
+             'path, and second to specify directory where wave files are. '
+    )
+    parser.add_argument(
+        '-e', '--evaluate',
+        default='',
+        action='store',
+        nargs=2,
+        help='Evaluate a model (first arg) against HUB4 annotation (second arg). '
+             'HUB4 annotations (txt) and audio files (sph) must be located in '
+             'a single directory. '
     )
     parser.add_argument(
         '-o', '--out',
@@ -39,6 +56,15 @@ if __name__ == '__main__':
              'segment. Newly generated files are stored in a subdirectory named '
              'after the full audio file, and suffixed with starting position '
              'in seconds (to two decimal places).'
+    )
+    parser.add_argument(
+        '-n', '--numfiles',
+        default=sys.maxsize,
+        action='store',
+        type=int,
+        help='Valid with \'segment\' and \'evaluate\' flags. When given, '
+             'the number of files in data directory to process or evaluate will '
+             'be limited to the given value.'
     )
 
     if len(sys.argv) == 1:
@@ -52,15 +78,15 @@ if __name__ == '__main__':
             npzarrays = numpy.load(args.train)
             X, Y = npzarrays['xs'], npzarrays['ys']
         else:
-            X, Y = feature.extract_all(reader.read_wavs(args.train), train=True, frame_context=6, binary_class=True, persist=True)
+            X, Y = feature.extract_all(reader.read_audios(args.train), train=True, binary_class=True, persist=True)
         model_path = classifier.train_pipeline(X, Y)
         print("============")
         print("model saved at " + model_path)
         print("============")
 
     if args.segment:
-        for wav in reader.read_wavs(args.segment[1], file_ext=['mp3', 'wav']):
-            model = classifier.load_model(args.segment[0])
+        model = classifier.load_model(args.segment[0])
+        for wav in reader.read_audios(args.segment[1], file_per_dir=args.numfiles):
             predicted = classifier.predict_pipeline(wav, model)
             smoothed = smoothing.smooth(predicted)
             speech_portions, total_frames = writer.index_frames(smoothed)
@@ -70,4 +96,7 @@ if __name__ == '__main__':
                 print('writing files')
                 writer.slice_speech(speech_portions, audio_fname)
 
+    if args.evaluate:
+        model = classifier.load_model(args.evaluate[0])
+        evaluation.evaluate_files(args.evaluate[1], model, args.numfiles)
 

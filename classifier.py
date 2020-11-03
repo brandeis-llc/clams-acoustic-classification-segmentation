@@ -16,13 +16,15 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
     return persist_model(model, '_models')
 
 
-def predict_pipeline(audio_fpath, model):
+def predict_pipeline(audio_fpath, model, raw_prob=False):
     import feature
     import os
     if type(audio_fpath) != str:
         audio_fpath = os.path.join(*audio_fpath)
-    feats = feature.extract(audio_fpath, verbose=False)
-    predictions = np.argmax(model.predict(feats), axis=1)
+    feats = feature.extract(audio_fpath, verbose=True)
+    predictions = model.predict(feats)
+    if not raw_prob:
+        predictions = np.argmax(predictions, axis=1)
     return predictions
 
 
@@ -31,10 +33,11 @@ def prep_data_pipeline(X, Y, downsample=False):
     negs = np.where(Y != 0)[0]
     poss = np.where(Y == 0)[0]
     if downsample:
-        # we know for sure that negative examples (nonspeech) are much larger than the positives
+        # we know for sure that negative examples (nonspeech) are much smaller than the positives, so trim positives instances
         np.random.shuffle(poss)
         poss = poss[:len(negs)]
 
+    # because both poss and negs are 1d array, should use hstack to concat them
     data_idxs = np.hstack((poss, negs))
     X_tr, X_te, Y_tr, Y_te = train_test_split(X[data_idxs], Y[data_idxs], test_size=0.1, shuffle=True)
     (traind, num_cats), (testd, _) = to_tf_dataset(X_tr, Y_tr), to_tf_dataset(X_te, Y_te)
