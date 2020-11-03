@@ -20,8 +20,10 @@ def read_hub4_annotation(annotation_fname):
         for section in tree.find_all('section'):
             # according to the guidelines, filler and sports_repost sections are
             # not transcribe - and they should not have any 'segment' tags
-            if section['type'].lower() == 'filler' or \
-                    section['type'].lower() == 'sports_report':
+            # also, we found "Local_News" and "Commercial" type sections also do not have segments in most cases 
+            # (only 5 out of 118 "Local_News" sections had at least one segment, and 5 out of 553 "Commercial" sections had at least one segment)
+            # so we decided to treat local_news & commercial as unannotated, too
+            if section['type'].lower() in ('filler', 'commercial', 'local_news', 'sports_report'):
                 segmentation['unannotated'].append((float(section['s_time']), float(section['e_time'])))
             for segment in section.find_all('segment'):
                 segmentation['speech'].append((float(segment['s_time']), float(segment['e_time'])))
@@ -59,7 +61,7 @@ def to_nparray(segment_dict, audio_duration, frame_size=feature.FRAME_SIZE):
 
     # smooth out short non-speeches
     # https://github.com/brandeis-llc/acoustic-classification-segmentation/blob/v1/evaluation.py#L94-L96
-    smoothing.trim_short_noises(a, 3000 // frame_size) # 3000 ms = 3 seconds
+    smoothing.trim_short_noises(a, 1000 // frame_size) # 3000 ms = 3 seconds
 
     # account for unannotated portions at the start of the file
     # https://github.com/brandeis-llc/acoustic-classification-segmentation/blob/v1/evaluation.py#L46-L49

@@ -55,6 +55,6 @@ def smooth(predictions):
     # smoothings happen in-place
     # mode_smooth(predictions)
     # minimum_change_support(predictions)
-    trim_short_noises(predictions)
+    trim_short_noises(predictions, threshold=100)
     trim_short_speech(predictions)
     return predictions
