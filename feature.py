@@ -10,7 +10,7 @@ ZCR=False
 MFCC_NUM=40
 
 
-def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr=ZCR, mfcc_num=MFCC_NUM, verbose=True, **kwargs):
+def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr=ZCR, mfcc_num=MFCC_NUM, verbose=False, **kwargs):
     # will sample 16000 points per second
     audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
     if verbose:
