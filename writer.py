@@ -1,6 +1,8 @@
 import ffmpeg
 import os
+import feature
 
+PRECISION = 1000 // feature.FRAME_SIZE
 
 def index_frames(predictions):
     speech = False
@@ -22,7 +24,7 @@ def print_durations(indexed_speech_segements, input_audio_fname, total_len=None)
     speech_sum = 0
     print(input_audio_fname, end='\t', flush=True)
     for start, end in indexed_speech_segements.items():
-        print(f'{start / 100}\t{end / 100}', end='\t', flush=True)
+        print(f'{start / PRECISION}\t{end / PRECISION}', end='\t', flush=True)
         speech_sum += (end - start)
 
     if total_len is not None:
@@ -41,8 +43,8 @@ def slice_speech(indexed_speech_segements, input_audio_fname):
             os.remove(os.path.join(output_dirname, f))
 
     for start, end in indexed_speech_segements.items():
-        start = start / 100
-        end = end / 100
+        start = start / PRECISION
+        end = end / PRECISION
         output_fname = f'{output_dirname.split(os.sep)[-1]}.{str(start)}.wav'
         in_stream = ffmpeg.input(input_audio_fname, f=input_audio_fname[-3:], ss=start, t=end-start)
         in_stream.output(os.path.join(output_dirname, output_fname)).run(overwrite_output=True)
