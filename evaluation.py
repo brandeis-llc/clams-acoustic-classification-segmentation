@@ -85,12 +85,12 @@ def p_r_f(hub4_array, predictions):
     predictions must be 1d array of labels, not k-d raw probabilities
     """
     annotated_idx = np.where(hub4_array != -1)[0]
-    return metrics.precision_recall_fscore_support(hub4_array[annotated_idx], predictions[annotated_idx], pos_label=0, average='binary')
+    return metrics.precision_recall_fscore_support(hub4_array[annotated_idx], predictions[annotated_idx], pos_label=1, average='binary')
 
 
 def roc(hub4_array, predictions):
     annotated_idx = np.where(hub4_array != -1)[0]
-    return metrics.roc_curve(hub4_array[annotated_idx], predictions[annotated_idx][:,0], pos_label=0)
+    return metrics.roc_curve(hub4_array[annotated_idx], predictions[annotated_idx][:,0], pos_label=1)
 
 
 def evaluate_file(sph_fname, txt_fname, classifier_model):
