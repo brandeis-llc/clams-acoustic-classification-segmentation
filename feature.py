@@ -6,8 +6,8 @@ import numpy as np
 labels = {'speech': 0, 'music': 1, 'noise': 2}
 FRAME_SIZE = 10 # milliseconds
 CONTEXT_FRAMES = 0
-ZCR=True
-MFCC_NUM=20
+ZCR=False
+MFCC_NUM=40
 
 
 def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr=ZCR, mfcc_num=MFCC_NUM, verbose=True, **kwargs):
