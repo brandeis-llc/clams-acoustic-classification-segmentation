@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import librosa
 import numpy as np
@@ -12,7 +13,9 @@ MFCC_NUM=40
 
 def extract(wav_fname, frame_size=FRAME_SIZE, context_frames=CONTEXT_FRAMES, zcr=ZCR, mfcc_num=MFCC_NUM, verbose=False, **kwargs):
     # will sample 16000 points per second
-    audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        audio, sr = librosa.load(wav_fname, sr=16000, **kwargs)
     if verbose:
         print(f'feature extracting: {wav_fname}\t', end='', flush=True)
     feats = spectral_feats(audio, frame_size, sr, mfcc_num, zcr)
