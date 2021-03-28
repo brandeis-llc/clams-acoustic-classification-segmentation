@@ -33,18 +33,28 @@ def main():
         '-s', '--segment',
         default='',
         action='store',
-        nargs=2,
-        help='Flag to invoke segmentation pipeline. First arg to specify model '
+        metavar='AUDIO',
+        help='Flag to invoke segmentation pipeline. '
+             'First arg to specify model '
              'path, and second to specify directory where wave files are. '
     )
     parser.add_argument(
         '-e', '--evaluate',
         default='',
         action='store',
-        nargs=2,
-        help='Evaluate a model (first arg) against HUB4 annotation (second arg). '
-             'HUB4 annotations (txt) and audio files (sph) must be located in '
+        metavar='HUB4',
+        help='Run evaluation against HUB4 annotation. '
+             'HUB4 annotations (txt) and audio files (sph) must be located '\
+             'in '
              'a single directory. '
+             'Use with --model to specify the model to evaluate. '
+    )
+    parser.add_argument(
+        '-m', '--model',
+        default=os.path.join(os.path.dirname(__file__), 'defmodel'),
+        action='store',
+        help='Specify model to use for --segment or --evaluate. '
+             'The argument must be a directory name where tensorflow:SavedModel is stored. '
     )
     parser.add_argument(
         '-o', '--out',
@@ -84,8 +94,8 @@ def main():
         print("============")
 
     if args.segment:
-        model = classifier.load_model(args.segment[0])
-        for wav in reader.read_audios(args.segment[1], file_per_dir=args.numfiles):
+        model = classifier.load_model(args.model)
+        for wav in reader.read_audios(args.segment, file_per_dir=args.numfiles):
             predicted = classifier.predict_pipeline(wav, model)
             smoothed = smoothing.smooth(predicted)
             speech_portions, total_frames = writer.index_frames(smoothed)
@@ -97,8 +107,8 @@ def main():
 
     if args.evaluate:
         from bacs import evaluation
-        model = classifier.load_model(args.evaluate[0])
-        evaluation.evaluate_files(args.evaluate[1], model, args.numfiles)
+        model = classifier.load_model(args.model)
+        evaluation.evaluate_files(args.evaluate, model, args.numfiles)
 
 
 if __name__ == '__main__':

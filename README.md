@@ -24,7 +24,7 @@ To train your own model, invoke `bacs` with `-t` flag and pass the directory nam
 
 ## Segmentation
 
-To run the segmenter over audio files, invoke `bacs` with `-s` flag, and pass 1) model path (feel free to use the pretrained model if needed) and 2) the directory where audio files are stored. Currently it will process all `mp3` and `wav` files in the target directory. 
+To run the segmenter over audio files, invoke `bacs` with `-s` flag, and pass the directory where audio files are stored. Optionally, you can pass the model path with `-m` flag. If the model path is not given, the default pretrained model will be used. Currently, it will process all `mp3` and `wav` files in the target directory. 
 
 If you want to process other types of audio file, you need to edit source code for now. Clone this repository and add to or change the `file_ext` list near the bottom of [`run.py`](bacs/run.py) files. When running from source code, run `run.py` file. 
 

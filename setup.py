@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='brandeis-acs',
-    version='1.2',
+    version='1.3',
     packages=['bacs'],
     url='https://github.com/brandeis-llc/acoustic-classification-segmentation',
     license='MIT',
@@ -13,5 +13,9 @@ setup(
         'console_scripts': [
             'bacs = bacs.run:main'
         ]
-    }
+    },
+    package_data={
+        'bacs': ['defmodel/**/*']
+    },
+
 )
