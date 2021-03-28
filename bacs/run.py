@@ -2,10 +2,9 @@
 
 import sys
 import os
-import evaluation
 
-if __name__ == '__main__':
 
+def main():
     import argparse
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -71,7 +70,7 @@ if __name__ == '__main__':
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
-    import reader, feature, classifier, smoothing, writer
+    from bacs import reader, feature, classifier, smoothing, writer
     if args.train:
         if args.train.endswith('.npz'):
             import numpy
@@ -97,6 +96,10 @@ if __name__ == '__main__':
                 writer.slice_speech(speech_portions, audio_fname)
 
     if args.evaluate:
+        from bacs import evaluation
         model = classifier.load_model(args.evaluate[0])
         evaluation.evaluate_files(args.evaluate[1], model, args.numfiles)
 
+
+if __name__ == '__main__':
+    main()

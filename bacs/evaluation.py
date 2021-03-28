@@ -4,9 +4,9 @@ import numpy as np
 from bs4 import BeautifulSoup as bs
 from sklearn import metrics
 
-import classifier
-import feature
-import smoothing
+from bacs import classifier
+from bacs import feature
+from bacs import smoothing
 
 
 def read_hub4_annotation(annotation_fname):

@@ -17,7 +17,7 @@ def train_pipeline(X: np.ndarray, Y: np.ndarray):
 
 
 def predict_pipeline(audio_fpath, model, raw_prob=False):
-    import feature
+    from bacs import feature
     import os
     if type(audio_fpath) != str:
         audio_fpath = os.path.join(*audio_fpath)

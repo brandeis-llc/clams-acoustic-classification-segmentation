@@ -1,8 +1,9 @@
 import ffmpeg
 import os
-import feature
+from bacs import feature
 
 PRECISION = 1000 // feature.FRAME_SIZE
+
 
 def index_frames(predictions):
     speech = False
