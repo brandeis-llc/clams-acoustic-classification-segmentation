@@ -1,11 +1,12 @@
-FROM tensorflow/tensorflow:2.0.1
+FROM tensorflow/tensorflow:2.4.0
 
 RUN apt-get update && apt-get install -y libsndfile1 ffmpeg
 
 RUN useradd -d /segmenter -m segmenter  && chown -R segmenter /segmenter
-USER segmenter
 COPY . /segmenter
 WORKDIR /segmenter
 RUN pip install -r requirements.txt
+RUN python setup.py develop
+USER segmenter
 
-CMD python run.py -s pretrained/$(ls pretrained/ | sort | tail -1) data > data/segmented.tsv
+CMD bacs -s /segmenter/pretrained/$(ls pretrained/ | sort | tail -1) /segmenter/data > /segmenter/data/segmented.tsv

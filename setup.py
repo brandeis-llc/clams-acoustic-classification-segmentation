@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='bacs',
+    name='brandeis-acs',
     version='1.2',
     packages=['bacs'],
     url='https://github.com/brandeis-llc/acoustic-classification-segmentation',
