@@ -60,6 +60,7 @@ hs_err_pid* # virtual machine crash logs, see http://www.java.com/en/download/he
 **/*.pyc
 **/__pycache__
 *.egg-info
+dist/
 
 # shared folders
 dropbox_shared*/
