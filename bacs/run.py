@@ -2,6 +2,7 @@
 
 import sys
 import os
+import bacs
 
 
 def main():
@@ -51,7 +52,7 @@ def main():
     )
     parser.add_argument(
         '-m', '--model',
-        default=os.path.join(os.path.dirname(__file__), 'defmodel'),
+        default=bacs.defmodel_path,
         action='store',
         help='Specify model to use for --segment or --evaluate. '
              'The argument must be a directory name where tensorflow:SavedModel is stored. '
