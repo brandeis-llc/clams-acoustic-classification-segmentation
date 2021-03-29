@@ -108,7 +108,7 @@ def evaluate_files(hub4_dir, model, numfiles):
     all_predictions = np.empty((0,))
     all_annotations = np.empty((0,))
     for sph_path in reader.read_audios(hub4_dir, file_ext=['sph'], file_per_dir=numfiles):
-        base_fname = sph_path[1].split('.')[0]
+        base_fname = os.path.splitext(sph_path[1])[0]
         probs, predictions, annotations, scores = evaluate_file(os.path.join(*sph_path), os.path.join(hub4_dir, base_fname + '.txt'), model)
         all_probabilities = np.vstack((all_probabilities, probs))
         all_predictions = np.hstack((all_predictions, predictions))
