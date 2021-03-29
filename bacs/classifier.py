@@ -1,6 +1,8 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
+
+import bacs
 
 BATCH_SIZE = 1024
 RANDOM_SEED = 123
@@ -87,5 +89,5 @@ def persist_model(model, persist_dir):
     return model_path
 
 
-def load_model(model_path):
+def load_model(model_path=bacs.defmodel_path):
     return tf.keras.models.load_model(model_path)

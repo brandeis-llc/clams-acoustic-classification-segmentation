@@ -17,7 +17,7 @@ def index_frames(predictions):
             cur_speech_segment_started = f_num
             speech = True
     if speech:
-        segments[cur_speech_segment_started] = len(predictions) - 1
+        segments[cur_speech_segment_started] = len(predictions)
     return segments, len(predictions)
 
 
