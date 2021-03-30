@@ -11,10 +11,10 @@ def read_sph(r, f):
         return os.path.dirname(tempf.name), os.path.basename(tempf.name)
 
 
-def read_audios(data_dir, file_ext=['wav', 'mp3', 'sph'], file_per_dir=sys.maxsize):
+def read_audios(data_dir, file_ext=('wav', 'mp3', 'sph'), file_per_dir=sys.maxsize):
     for r, ds, fs in os.walk(data_dir):
         for f in fs[:file_per_dir]:
-            if os.path.splitext(f)[-1] in file_ext:
+            if f.split('.')[-1] in file_ext:
                 if f.endswith('.sph'):
                     yield read_sph(r, f)
                 else:
