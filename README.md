@@ -1,4 +1,4 @@
-# Acoustic Calssification & Segmentation 
+# Acoustic Classification & Segmentation 
 
 Simple audio segmenter to isolate speech portion out of audio streams. Uses a simple feedforward neural network for classification (implemented using `tensorflow`) and heuristic smoothing methods to increase the recall of speech segments. 
 
