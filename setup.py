@@ -8,7 +8,7 @@ with open('requirements.txt') as requirements:
 
 setup(
     name='brandeis-acs',
-    version='1.10',
+    version='1.11',
     packages=['bacs'],
     url='https://github.com/brandeis-llc/acoustic-classification-segmentation',
     license='MIT',

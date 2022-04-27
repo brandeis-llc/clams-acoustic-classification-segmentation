@@ -1,9 +1,9 @@
-librosa==0.7.2
-numba==0.48
+librosa>=0.7.2
+numba>=0.48
 numpy>=1.15
 scipy>=1.4.1
 scikit-learn>=0.22.1
-ffmpeg-python==0.2.0
+ffmpeg-python>=0.2.0
 sphfile>=1.0.0
-beautifulsoup4~=4.9
-tensorflow==2.5.0
+beautifulsoup4==4.*
+tensorflow==2.*
